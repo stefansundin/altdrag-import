@@ -18,421 +18,110 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <windows.h>
 
-//#define DEBUG
-
-//shift, move and hwnd are shared since CallWndProc is called in the context of another thread
 static int alt=0;
-static int shift __attribute__((section ("shared"), shared)) = 0;
-static int move __attribute__((section ("shared"), shared)) = 0;
-static HWND hwnd __attribute__((section ("shared"), shared)) = NULL;
+static int move=0;
+static HWND hwnd=NULL;
 static POINT offset;
-static HWND *wnds=NULL;
-static int numwnds=0;
-static int maxwnds=0;
 
-static HINSTANCE hinstDLL;
-static HHOOK mousehook;
-static int hook_installed=0;
-
-static char txt[100];
-
-BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
-	//Make sure we have enough space allocated
-	if (numwnds == maxwnds) {
-		if ((wnds=realloc(wnds,(maxwnds+100)*sizeof(HWND))) == NULL) {
-			#ifdef DEBUG
-			sprintf(txt,"realloc() failed in file %s, line %d.",__FILE__,__LINE__);
-			MessageBox(NULL, txt, "AltDrag Warning", MB_ICONWARNING|MB_OK);
-			#endif
-			return FALSE;
-		}
-		maxwnds+=100;
-	}
-	//Only store window if it's visible, not minimized to taskbar, not maximized and not the window we are dragging
-	if (IsWindowVisible(hwnd) && !IsIconic(hwnd) && !IsZoomed(hwnd) && hwnd != (HWND)lParam) {
-		wnds[numwnds++]=hwnd;
-	}
-	//If this window is maximized we don't want to stick to any windows that might be under it
-	if (IsZoomed(hwnd)) {
-		wnds[numwnds++]=GetDesktopWindow(); //Since desktop is the last hwnd to be added, we need to add it now before returning
-		return FALSE;
-	}
-	return TRUE;
-}
-
-void MoveWnd() {
-	//Check if window still exists
-	if (!IsWindow(hwnd)) {
-		move=0;
-		RemoveHook();
-		return;
-	}
-	
-	//Get window size
-	RECT wnd;
-	if (GetWindowRect(hwnd,&wnd) == 0) {
-		#ifdef DEBUG
-		sprintf(txt,"GetWindowRect() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
-		MessageBox(NULL, txt, "AltDrag Warning", MB_ICONWARNING|MB_OK);
-		#endif
-	}
-	
-	//Get new position for window
-	POINT pt;
-	GetCursorPos(&pt);
-	int posx=pt.x-offset.x;
-	int posy=pt.y-offset.y;
-	int wndwidth=wnd.right-wnd.left;
-	int wndheight=wnd.bottom-wnd.top;
-	
-	//Double check if any of the shift keys are being pressed
-	if (shift && !(GetAsyncKeyState(VK_SHIFT)&0x8000)) {
-		shift=0;
-	}
-	
-	//Check if window will stick anywhere
-	if (shift) {
-		numwnds=0;
-		EnumWindows(EnumWindowsProc,(LPARAM)hwnd);
-		/*
-		//Use this to print the windows in wnds
-		FILE *f=fopen("C:\\altdrag-log.txt","wb");
-		fprintf(f,"numwnds: %d\n",numwnds);
-		char title[100];
-		char classname[100];
-		int j;
-		for (j=0; j < numwnds; j++) {
-			GetWindowText(wnds[j],title,100);
-			GetClassName(wnds[j],classname,100);
-			RECT wndsize;
-			GetWindowRect(wnds[j],&wndsize);
-			fprintf(f,"wnd #%03d: %s [%s] (%dx%d@%dx%d)\n",j,title,classname,wndsize.right-wndsize.left,wndsize.bottom-wndsize.top,wndsize.left,wndsize.top);
-		}
-		fclose(f);
-		*/
-		
-		//thresholdx and thresholdy will shrink to make sure the dragged window will stick to the closest windows
-		int i, thresholdx=20, thresholdy=20, stuckx=0, stucky=0, stickx=0, sticky=0;
-		//Loop windows
-		for (i=0; i < numwnds; i++) {
-			RECT stickywnd;
-			if (GetWindowRect(wnds[i],&stickywnd) == 0) {
-				#ifdef DEBUG
-				sprintf(txt,"GetWindowRect() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
-				MessageBox(NULL, txt, "AltDrag Warning", MB_ICONWARNING|MB_OK);
-				#endif
-			}
-			
-			//Check if posx sticks
-			if ((stickywnd.top-thresholdx < posy && posy < stickywnd.bottom+thresholdx)
-			 || (posy-thresholdx < stickywnd.top && stickywnd.top < posy+wndheight+thresholdx)) {
-				if (posx-thresholdx < stickywnd.right && stickywnd.right < posx+thresholdx) {
-					//The left edge of the dragged window will stick to this window's right edge
-					stuckx=1;
-					stickx=stickywnd.right;
-					thresholdx=stickywnd.right-posx;
-				}
-				else if (posx+wndwidth-thresholdx < stickywnd.right && stickywnd.right < posx+wndwidth+thresholdx) {
-					//The right edge of the dragged window will stick to this window's right edge
-					stuckx=1;
-					stickx=stickywnd.right-wndwidth;
-					thresholdx=stickywnd.right-(posx+wndwidth);
-				}
-				else if (posx-thresholdx < stickywnd.left && stickywnd.left < posx+thresholdx) {
-					//The left edge of the dragged window will stick to this window's left edge
-					stuckx=1;
-					stickx=stickywnd.left;
-					thresholdx=stickywnd.left-posx;
-				}
-				else if (posx+wndwidth-thresholdx < stickywnd.left && stickywnd.left < posx+wndwidth+thresholdx) {
-					//The right edge of the dragged window will stick to this window's left edge
-					stuckx=1;
-					stickx=stickywnd.left-wndwidth;
-					thresholdx=stickywnd.left-(posx+wndwidth);
-				}
-			}
-			
-			//Check if posy sticks
-			if ((stickywnd.left-thresholdy < posx && posx < stickywnd.right+thresholdy)
-			 || (posx-thresholdy < stickywnd.left && stickywnd.left < posx+wndwidth+thresholdy)) {
-				if (posy-thresholdy < stickywnd.bottom && stickywnd.bottom < posy+thresholdy) {
-					//The top edge of the dragged window will stick to this window's bottom edge
-					stucky=1;
-					sticky=stickywnd.bottom;
-					thresholdy=stickywnd.bottom-posy;
-				}
-				else if (posy+wndheight-thresholdy < stickywnd.bottom && stickywnd.bottom < posy+wndheight+thresholdy) {
-					//The bottom edge of the dragged window will stick to this window's bottom edge
-					stucky=1;
-					sticky=stickywnd.bottom-wndheight;
-					thresholdy=stickywnd.bottom-(posy+wndheight);
-				}
-				else if (posy-thresholdy < stickywnd.top && stickywnd.top < posy+thresholdy) {
-					//The top edge of the dragged window will stick to this window's top edge
-					stucky=1;
-					sticky=stickywnd.top;
-					thresholdy=stickywnd.top-posy;
-				}
-				else if (posy+wndheight-thresholdy < stickywnd.top && stickywnd.top < posy+wndheight+thresholdy) {
-					//The bottom edge of the dragged window will stick to this window's top edge
-					stucky=1;
-					sticky=stickywnd.top-wndheight;
-					thresholdy=stickywnd.top-(posy+wndheight);
-				}
-			}
-		}
-		
-		//Did we stick somewhere?
-		if (stuckx) {
-			posx=stickx;
-		}
-		if (stucky) {
-			posy=sticky;
-		}
-	}
-	
-	//Move
-	if (MoveWindow(hwnd,posx,posy,wndwidth,wndheight,TRUE) == 0) {
-		#ifdef DEBUG
-		sprintf(txt,"MoveWindow() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
-		MessageBox(NULL, txt, "AltDrag Warning", MB_ICONWARNING|MB_OK);
-		#endif
-	}
-	
-	/*FILE *f=fopen("C:\\altdrag-log.txt","ab");
-	char title[100], classname[100];
-	GetWindowText(hwnd,title,100);
-	GetClassName(hwnd,classname,100);
-	fprintf(f,"Moving window %s [%s] to (%d,%d)\n",title,classname,posx,posy);
-	fclose(f);*/
-}
+static char msg[100];
 
 _declspec(dllexport) LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (nCode == HC_ACTION) {
 		int vkey=((PKBDLLHOOKSTRUCT)lParam)->vkCode;
 		
-		if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
-			if (!alt && vkey == VK_LMENU) {
+		if (vkey == VK_MENU || vkey == VK_LMENU || vkey == VK_RMENU) {
+			if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
 				alt=1;
-				InstallHook();
 			}
-			else if (!shift && (vkey == VK_LSHIFT || vkey == VK_RSHIFT)) {
-				shift=1;
-				if (move) {
-					MoveWnd();
-				}
-			}
-			else if (move && (vkey == VK_LCONTROL || vkey == VK_RCONTROL)) {
-				SetForegroundWindow(hwnd);
-			}
-		}
-		else if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP) {
-			if (vkey == VK_LMENU) {
+			else if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP) {
 				alt=0;
-				if (!move) {
-					RemoveHook();
-				}
-			}
-			else if (vkey == VK_LSHIFT || vkey == VK_RSHIFT) {
-				shift=0;
-				if (move) {
-					MoveWnd();
-				}
 			}
 		}
 	}
 	
-    return CallNextHookEx(NULL, nCode, wParam, lParam);
+    return CallNextHookEx(NULL, nCode, wParam, lParam); 
 }
 
 _declspec(dllexport) LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (nCode == HC_ACTION) {
-		if (wParam == WM_LBUTTONDOWN && alt && !move) {
-			//Double check if the left alt key is being pressed
-			if (!(GetAsyncKeyState(VK_LMENU)&0x8000)) {
-				alt=0;
-				RemoveHook();
+		POINT pt=((PMSLLHOOKSTRUCT)lParam)->pt;
+		if (!move && wParam == WM_LBUTTONDOWN && alt) {
+			//Get hwnd
+			if ((hwnd=WindowFromPoint(pt)) == NULL) {
+				sprintf(msg,"WindowFromPoint() failed in file %s, line %d.",__FILE__,__LINE__);
+				MessageBox(NULL, msg, "AltDrag Warning", MB_ICONWARNING|MB_OK);
+			}
+			hwnd=GetAncestor(hwnd,GA_ROOT);
+			//Restore the window if it's maximized
+			if (IsZoomed(hwnd)) {
+				//Restore window
+				WINDOWPLACEMENT wndpl;
+				wndpl.length=sizeof(WINDOWPLACEMENT);
+				GetWindowPlacement(hwnd,&wndpl);
+				wndpl.showCmd=SW_RESTORE;
+				SetWindowPlacement(hwnd,&wndpl);
+				
+				//Get hwnd pos and size
+				RECT rect;
+				if (GetWindowRect(hwnd,&rect) == 0) {
+					sprintf(msg,"GetClientRect() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
+					MessageBox(NULL, msg, "AltDrag Warning", MB_ICONWARNING|MB_OK);
+				}
+				
+				//Set offset
+				offset.x=(rect.right-rect.left)/2;
+				offset.y=(rect.bottom-rect.top)/2;
+				
+				//Move
+				if (MoveWindow(hwnd,pt.x-offset.x,pt.y-offset.y,rect.right-rect.left,rect.bottom-rect.top,TRUE) == 0) {
+					sprintf(msg,"MoveWindow() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
+					MessageBox(NULL, msg, "AltDrag Warning", MB_ICONWARNING|MB_OK);
+				}
 			}
 			else {
-				//Alt key is still being pressed
-				POINT pt=((PMSLLHOOKSTRUCT)lParam)->pt;
-				
-				//Get window
-				if ((hwnd=WindowFromPoint(pt)) == NULL) {
-					#ifdef DEBUG
-					sprintf(txt,"WindowFromPoint() failed in file %s, line %d.",__FILE__,__LINE__);
-					MessageBox(NULL, txt, "AltDrag Warning", MB_ICONWARNING|MB_OK);
-					#endif
+				//Get hwnd pos and size
+				RECT rect;
+				if (GetWindowRect(hwnd,&rect) == 0) {
+					sprintf(msg,"GetClientRect() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
+					MessageBox(NULL, msg, "AltDrag Warning", MB_ICONWARNING|MB_OK);
 				}
-				hwnd=GetAncestor(hwnd,GA_ROOT);
-				
-				//Check if this is a blacklisted window (ClassName)
-				int blacklisted=0;
-				char *blacklist[]={"TaskSwitcherWnd", "TaskSwitcherOverlayWnd", '\0'};
-				char classname[100]; //classname must be at least as long as the longest member in the list blacklist
-				GetClassName(hwnd,classname,sizeof(classname));
-				int i=0;
-				while (blacklist[i] != '\0') {
-					if (!strcmp(classname,blacklist[i])) {
-						//This window is blacklisted
-						blacklisted=1;
-						break;
-					}
-					i++;
-				}
-				
-				//Only continue if window is not blacklisted
-				if (!blacklisted) {
-					//Get window and desktop size
-					RECT window;
-					if (GetWindowRect(hwnd,&window) == 0) {
-						#ifdef DEBUG
-						sprintf(txt,"GetWindowRect() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
-						MessageBox(NULL, txt, "AltDrag Warning", MB_ICONWARNING|MB_OK);
-						#endif
-					}
-					RECT desktop;
-					if (GetWindowRect(GetDesktopWindow(),&desktop) == 0) {
-						#ifdef DEBUG
-						sprintf(txt,"GetWindowRect() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
-						MessageBox(NULL, txt, "AltDrag Warning", MB_ICONWARNING|MB_OK);
-						#endif
-					}
-					
-					//Don't move the window if it's fullscreen
-					if (window.left != desktop.left || window.top != desktop.top || window.right != desktop.right || window.bottom != desktop.bottom) {
-						//Restore the window if it's maximized
-						if (IsZoomed(hwnd)) {
-							//Restore window
-							WINDOWPLACEMENT wndpl;
-							wndpl.length=sizeof(WINDOWPLACEMENT);
-							GetWindowPlacement(hwnd,&wndpl);
-							wndpl.showCmd=SW_RESTORE;
-							SetWindowPlacement(hwnd,&wndpl);
-							
-							//Get new pos and size
-							RECT newwindow;
-							if (GetWindowRect(hwnd,&newwindow) == 0) {
-								#ifdef DEBUG
-								sprintf(txt,"GetWindowRect() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
-								MessageBox(NULL, txt, "AltDrag Warning", MB_ICONWARNING|MB_OK);
-								#endif
-							}
-							
-							//Set offset
-							offset.x=(float)(pt.x-window.left)/(window.right-window.left)*(newwindow.right-newwindow.left);
-							offset.y=(float)(pt.y-window.top)/(window.bottom-window.top)*(newwindow.bottom-newwindow.top);
-							
-							//Move
-							MoveWnd();
-						}
-						else {
-							//Set offset
-							offset.x=pt.x-window.left;
-							offset.y=pt.y-window.top;
-						}
-						//Ready to move window
-						move=1;
-						//Prevent mousedown from propagating
-						return 1;
-					}
-				}
+				//Set offset
+				offset.x=pt.x-rect.left;
+				offset.y=pt.y-rect.top;
 			}
+			//Ready to move hwnd
+			move=1;
+			//Prevent mousepress from propagating
+			return 1;
 		}
 		else if (wParam == WM_LBUTTONUP && move) {
 			move=0;
-			if (!alt) {
-				RemoveHook();
+			hwnd=NULL;
+		}
+		
+		//Move window
+		if (wParam == WM_MOUSEMOVE && move) {
+			//Get hwnd pos and size
+			RECT rect;
+			if (GetWindowRect(hwnd,&rect) == 0) {
+				sprintf(msg,"GetClientRect() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
+				MessageBox(NULL, msg, "AltDrag Warning", MB_ICONWARNING|MB_OK);
 			}
-			//Prevent mouseup from propagating
-			return 1;
-		}
-		else if (wParam == WM_MOUSEMOVE && move) {
-			//Move window
-			MoveWnd();
-		}
-	}
-	
-	return CallNextHookEx(NULL, nCode, wParam, lParam);
-}
-
-//CallWndProc is called in the context of the thread that calls SendMessage, not the thread that receives the message.
-//Thus we have to explicitly share the memory we want CallWndProc to be able to access (shift, move and hwnd)
-_declspec(dllexport) LRESULT CALLBACK CallWndProc(int nCode, WPARAM wParam, LPARAM lParam) {
-	if (nCode == HC_ACTION && !move) {
-		CWPSTRUCT *msg=(CWPSTRUCT*)lParam;
-		
-		/*if (shift) {
-			FILE *f=fopen("C:\\callwndproc.log","ab"); //Important to specify the full path here since CallWndProc is called in the context of another thread.
-			fprintf(f,"message: %d\n",msg->message);
-			fclose(f);
-		}*/
-		
-		if (msg->message == WM_WINDOWPOSCHANGED && shift && IsWindowVisible(msg->hwnd)) {
-			//Set offset
-			POINT pt;
-			GetCursorPos(&pt);
-			WINDOWPOS *wndpos=(WINDOWPOS*)msg->lParam;
-			offset.x=pt.x-wndpos->x;
-			offset.y=pt.y-wndpos->y;
-			//Set hwnd
-			hwnd=msg->hwnd;
-			//Move window
-			MoveWnd();
+			
+			//Move
+			if (MoveWindow(hwnd,pt.x-offset.x,pt.y-offset.y,rect.right-rect.left,rect.bottom-rect.top,TRUE) == 0) {
+				sprintf(msg,"MoveWindow() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
+				MessageBox(NULL, msg, "AltDrag Warning", MB_ICONWARNING|MB_OK);
+			}
 		}
 	}
 	
-	return CallNextHookEx(NULL, nCode, wParam, lParam);
-}
-
-int InstallHook() {
-	if (hook_installed) {
-		//Hook already installed
-		return 1;
-	}
-	
-	//Set up the mouse hook
-	if ((mousehook=SetWindowsHookEx(WH_MOUSE_LL,MouseProc,hinstDLL,0)) == NULL) {
-		#ifdef DEBUG
-		sprintf(txt,"SetWindowsHookEx() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
-		MessageBox(NULL, txt, "AltDrag Warning", MB_ICONWARNING|MB_OK);
-		#endif
-		return 1;
-	}
-	
-	//Success
-	hook_installed=1;
-	return 0;
-}
-
-int RemoveHook() {
-	if (!hook_installed) {
-		//Hook not installed
-		return 1;
-	}
-	
-	//Remove mouse hook
-	if (UnhookWindowsHookEx(mousehook) == 0) {
-		#ifdef DEBUG
-		sprintf(txt,"UnhookWindowsHookEx() failed (error code: %d) in file %s, line %d.",GetLastError(),__FILE__,__LINE__);
-		MessageBox(NULL, txt, "AltDrag Warning", MB_ICONWARNING|MB_OK);
-		#endif
-		return 1;
-	}
-	
-	//Success
-	hook_installed=0;
-	return 0;
+	return CallNextHookEx(NULL, nCode, wParam, lParam); 
 }
 
 BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD reason, LPVOID reserved) {
-	if (reason == DLL_PROCESS_ATTACH) {
-		hinstDLL=hInstance;
-	}
-	else if (reason == DLL_PROCESS_DETACH) {
-		free(wnds);
-	}
 	return TRUE;
 }
