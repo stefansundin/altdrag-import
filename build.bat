@@ -1,9 +1,6 @@
 
 taskkill /IM AltDrag.exe
 
-gcc -o unhook unhook.c -mconsole
-unhook.exe
-
 gcc -c hooks.c
 gcc -shared -o hooks.dll hooks.o
 
@@ -14,4 +11,4 @@ strip AltDrag.exe
 strip hooks.dll
 
 upx --best -qq AltDrag.exe
-:: upx --best -qq hooks.dll
+upx --best -qq hooks.dll
