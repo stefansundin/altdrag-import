@@ -20,16 +20,14 @@ if "%1" == "all" (
 		mkdir "build\en-US\AltDrag"
 	)
 	gcc -o "build\en-US\AltDrag\AltDrag.exe" altdrag.c build\resources.o -mwindows -lshlwapi -lwininet
-	if not exist "build\en-US\AltDrag\AltDrag.exe" (
-		exit /b
+	if exist "build\en-US\AltDrag\AltDrag.exe" (
+		strip "build\en-US\AltDrag\AltDrag.exe"
 	)
-	strip "build\en-US\AltDrag\AltDrag.exe"
 	gcc -c -o "build\hooks.o" hooks.c
-	if not exist "build\hooks.o" (
-		exit /b
+	if exist "build\hooks.o" (
+		gcc -shared -o "build\en-US\AltDrag\hooks.dll" "build\hooks.o" -lshlwapi
+		strip "build\en-US\AltDrag\hooks.dll"
 	)
-	gcc -shared -o "build\en-US\AltDrag\hooks.dll" "build\hooks.o" -lshlwapi
-	strip "build\en-US\AltDrag\hooks.dll"
 	
 	for /D %%f in (localization/*) do (
 		@echo.
