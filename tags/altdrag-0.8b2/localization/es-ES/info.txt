@@ -1,0 +1,73 @@
+AltDrag
+Por Stefan Sundin
+Traducido por Fabrizio Ferri (algernon@gmail.com)
+
+Arrastra ventanas con el ratón al pulsar la tecla Alt.
+Puedes usar el botón central o derecho para redimensionar las ventanas.
+Si pulsas mayúsculas mientras arrastras o cambias el tamaño, la ventana se pegará a otras.
+Hacer doble-clic en una ventana la maximizará.
+Puedes enrollar ventanas haciendo doble-clic con el botón central del ratón.
+
+Puedes editar más opciones en AltDrag.ini:
+* Habilita HookWindows para poder usar la tecla Mayús. al mover normalmente las ventanas.
+* Habilita AutoStick para hacer que las ventanas se peguen siempre sin necesidad de pulsar Mayús.
+* Habilita RMBMinimize para minimizar ventanas con un clic derecho del ratón.
+* Edita la blacklist, un listado en el que puedes especificar qué ventanas no deben ser arrastradas.
+
+Las ventanas a pantalla completa, como los juegos, no pueden ser arrastradas o cambiadas de tamaño.
+Si hay retraso al mover y cambiar de tamaño a las ventanas, prueba a desabilitar el switch del cursor del ratón en AltDrag.ini
+AltDrag comprobará automáticamente si hay actualizacionas. Puedes desactivar esto en el AltDrag.ini.
+
+Puedes usar el parámetro -hide para ocultar el icono del área de notificación.
+
+Visita la página web en http://altdrag.googlecode.com/
+Envía comentarios a recover89@gmail.com
+
+Si opinas que este programa es útil, por favor, toma en consideración realizar un donativo. 
+Encontrarás las instrucciones en la página web.
+
+AltDrag es un programa de código abierto bajo licencia GPL.
+
+Historial de cambios
+--------------------
+0.8b2 - 2009-09-07:
+Añadido AutoStick, que permite que las ventanas se peguen siempre sin necesidad de mantener la tecla Mayús. pulsada. Esto reemplaza StickyScreen.
+El parámetro ExperimentalFeatures ha sido renombrado a HookWindows. También se ha mejorado, con lo que el cambio de tamaño está soportado y las ventanas ya no debería parpadear. Ha dejado de ser experimental.
+Añadido el parámetro RMBMinimize, habilítalo para minimizar ventanas con un clic derecho del ratón.
+Mejorado notablemente el soporte para múltiples monitores.
+Lista negra modificada (ver wiki).
+
+0.7 - 2009-04-24:
+Añadida función StickyScreen para hacer que las ventanas se peguen automáticamente a los bordes de pantalla sin mantener pulsado Mayus. (apagada por defecto).
+Añadida la habilidad de enrollar ventanas con un doble-clic usando el botón central del ratón.
+Arreglados algunos fallos en ExperimentalFeatures: ahora funciona correctamente y puede probarse.
+Arreglado un mensaje de error que aparecía a veces cuando AltDrag se ejecutaba al iniciar el sistema.
+
+0.6 - 2009-02-12:
+Ahora las ventanas pueden pegarse entre ellas también al cambiar de tamaño (excepto si se redimensiona en todas las direcciones)
+Arreglado el fallo por el cual el icono de notificación no se ocultaba al usar -hide
+Arreglado el fallo por el cual el puntero del ratón no cambiaba en Vista al estar Aero desactivado
+El idioma puede ahora cambiarse editando AltDrag.ini
+
+0.5 - 2009-01-12:
+Con el botón central o derecho se puede cambiar el tamaño de las ventanas.
+Puedes hacer doble-clic a una ventana para maximizarla.
+Puedes crear una lista negra de ventanas para que no sean arrastradas o pegadas.
+En la lista negra, por defecto, están la ventana de Alt+Tab y el botón de Inicio de Vista.
+El cursor del ratón cambia cuando arrastres o redimensiones ventanas.
+Sólo una instancia de AltDrag puede ser ejecutada ahora. Ejecutarlo una segunda vez hará que aparezca el icono de tarea.
+Característica experimental desactivada por defecto: se pueden pegar ventanas entre elllas manteniendo pulsada la tecla Mayúsculas. No funciona con procesos de 64 bits.
+
+0.4 - 2008-09-14:
+Usando la tecla Shift se pueden pegar ventanas entre ellas.
+
+0.3 - 2008-08-03:
+Arreglado un fallo que hacía que AltDrag ignorase las ventanas cercanas al borde por creer que estaban maximizadas.
+Mejorado el rendimiento al invocar el código del ratón sólo cuando se pulsa la tecla Alt.
+
+0.2 - 2008-08-01:
+Ya no se pueden arrastrar ventanas maximizadas
+La ventana puede ser colocada más fácilmente tras ser restaurada.
+
+0.1 - 2008-06-05:
+Primera versión.
