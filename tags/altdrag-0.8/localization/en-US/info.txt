@@ -1,0 +1,75 @@
+AltDrag
+Made by Stefan Sundin
+
+Drag windows with the mouse when pressing the alt key.
+You can use the middle or right mouse button to resize windows.
+If you press the shift key while you drag or resize, the window will stick to other windows.
+You can double-click a window to maximize it.
+You can double-click with the middle mouse button to roll-up windows.
+
+You can edit more settings in AltDrag.ini:
+* Enable HookWindows to be able to use the shift key when normally moving windows.
+* Enable AutoStick to make windows always stick without needing to press shift.
+* Change mouse button actions. You can make any mouse button move, resize, minimize or center the window you click on.
+* Edit the blacklist, a list where you can specify windows that shouldn't be dragged.
+
+Fullscreen windows, such as games, will not be dragged or resized.
+If you experience lag when you move or resize windows, try disabling the mouse cursor in AltDrag.ini.
+AltDrag will automatically check for updates. You can disable this in AltDrag.ini.
+
+You can use -hide as a parameter to hide the tray icon.
+
+Visit the website at http://altdrag.googlecode.com/
+Send feedback to recover89@gmail.com
+
+If this program is useful for you, please consider donating money.
+You can find out how to donate on the website.
+
+AltDrag is open source, licensed under GPL.
+
+Changelog
+---------
+0.8 - 2009-11-15:
+Added AutoStick, enable it to make windows always stick without needing to press shift. This replaces StickyScreen.
+Renamed ExperimentalFeatures to HookWindows, also improved it so resizing is now supported and windows should no longer flicker. 64-bit programs also work now. I no longer consider it experimental!
+The alt key will no longer activate the window menu!
+Added the ability to configure what keys should trigger the dragging, resizing, etc.
+Added the ability to configure what the mouse buttons do. New actions: minimize and center.
+Improved multi-monitor support a lot.
+Tweaked the blacklist (see wiki).
+
+0.7 - 2009-04-24:
+Added StickyScreen which makes windows automatically stick to the screen borders without needing shift (off by default).
+Added the ability to roll-up windows by double-clicking with the middle mouse button.
+Fixed some bugs in ExperimentalFeatures, it's working pretty well now so give it a try.
+Fixed an annoying error message that sometimes popped up when AltDrag was on autostart.
+
+0.6 - 2009-02-12:
+Sticky behavior now works with resize (except when resizing in all directions).
+Fixed tray not being hidden by -hide.
+Fixed mouse cursor not changing when Aero was disabled in Vista.
+Language can now be changed in AltDrag.ini.
+
+0.5 - 2009-01-12:
+You can now resize windows with the middle or right mouse button.
+You can now double-click a window to maximize it.
+You can now blacklist certain windows from being dragged and certain windows from being sticked to.
+Blacklisted by default: the alt+tab window in Vista.
+Sticky-blacklisted by default: the Vista start menu orb.
+The mouse cursor will now change when you move and resize windows.
+Only one instance of AltDrag can now be run. Starting AltDrag again will make the first copy add its tray icon.
+Experimental feature disabled by default: you can now press the shift key while normally moving windows (dragging the titlebar) to make them stick. Doesn't work with 64-bit processes.
+
+0.4 - 2008-09-14:
+You can now press the shift key to make the window stick to other windows.
+
+0.3 - 2008-08-03:
+Fixed a bug that made AltDrag ignore all windows which were at the screen borders since it thought they were fullscreen windows.
+Improved performance by only installing the mouse hook when the alt key is pressed.
+
+0.2 - 2008-08-01:
+You can no longer drag fullscreen windows.
+The window is better placed when it's restored from its maximized state.
+
+0.1 - 2008-06-05:
+Initial release.
