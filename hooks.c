@@ -28,7 +28,7 @@ HWND g_hwnd;
 #define UNLOCK_TIMER WM_APP+1
 
 //Enumerators
-enum action {ACTION_NONE=0, ACTION_MOVE, ACTION_RESIZE, ACTION_MINIMIZE, ACTION_CENTER, ACTION_ALWAYSONTOP, ACTION_CLOSE};
+enum action {ACTION_NONE=0, ACTION_MOVE, ACTION_RESIZE, ACTION_MINIMIZE, ACTION_CENTER, ACTION_ALWAYSONTOP, ACTION_CLOSE, ACTION_HOTKEY};
 enum button {BUTTON_NONE=0, BUTTON_LMB, BUTTON_MMB, BUTTON_RMB, BUTTON_MB4, BUTTON_MB5};
 enum resize {RESIZE_NONE=0, RESIZE_TOP, RESIZE_RIGHT, RESIZE_BOTTOM, RESIZE_LEFT, RESIZE_CENTER};
 enum cursor {HAND, SIZENWSE, SIZENESW, SIZENS, SIZEWE, SIZEALL};
@@ -101,6 +101,7 @@ struct {
 	} Hotkeys;
 	struct {
 		enum action LMB, MMB, RMB, MB4, MB5;
+		int Hotkey;
 	} Mouse;
 } sharedsettings shareattr;
 short sharedsettings_loaded shareattr = 0;
@@ -856,6 +857,13 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
 			(wParam==WM_LBUTTONUP||wParam==WM_MBUTTONUP||wParam==WM_RBUTTONUP||wParam==WM_XBUTTONUP)?STATE_UP:STATE_NONE;
 		int action = GetAction(button);
 		
+		//Is this mouse button a hotkey?
+		if (action == ACTION_HOTKEY) {
+			state.alt = (buttonstate == STATE_DOWN);
+			//return CallNextHookEx(NULL, nCode, wParam, lParam); //Can't block this mousedown or else GetAsyncKeyState() won't work with it
+			return 1;
+		}
+		
 		//Return if button isn't bound to any action
 		if (!action && wParam != WM_MOUSEMOVE) {
 			return CallNextHookEx(NULL, nCode, wParam, lParam);
@@ -868,14 +876,16 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
 		if (state.alt && buttonstate == STATE_DOWN) {
 			//Double check if any of the hotkeys are being pressed
 			int i;
-			for (i=0; i < sharedsettings.Hotkeys.length; i++) {
-				if (GetAsyncKeyState(sharedsettings.Hotkeys.keys[i])&0x8000) {
-					break;
-				}
-				else if (i+1 == sharedsettings.Hotkeys.length) {
-					state.alt = 0;
-					UnhookMouse();
-					return CallNextHookEx(NULL, nCode, wParam, lParam);
+			if (!sharedsettings.Mouse.Hotkey) {
+				for (i=0; i < sharedsettings.Hotkeys.length; i++) {
+					if (GetAsyncKeyState(sharedsettings.Hotkeys.keys[i])&0x8000) {
+						break;
+					}
+					else if (i+1 == sharedsettings.Hotkeys.length) {
+						state.alt = 0;
+						UnhookMouse();
+						return CallNextHookEx(NULL, nCode, wParam, lParam);
+					}
 				}
 			}
 			
@@ -1211,7 +1221,7 @@ int HookMouse() {
 }
 
 int UnhookMouse() {
-	if (!mousehook) {
+	if (!mousehook || sharedsettings.Mouse.Hotkey) {
 		//Mouse not hooked
 		return 1;
 	}
@@ -1392,6 +1402,11 @@ __declspec(dllexport) LRESULT CALLBACK CallWndProc(int nCode, WPARAM wParam, LPA
 //This is needed sometimes when an msghook thread lingers around for no apparent reason.
 __declspec(dllexport) void ClearSettings() {
 	sharedsettings_loaded = 0;
+	//Remove mouse hook if necessary
+	if (sharedsettings.Mouse.Hotkey) {
+		sharedsettings.Mouse.Hotkey = 0;
+		UnhookMouse();
+	}
 }
 
 BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
@@ -1403,6 +1418,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
 		if (!sharedsettings_loaded) {
 			sharedsettings_loaded = 1;
 			sharedsettings.Hotkeys.length = 0;
+			sharedsettings.Mouse.Hotkey = 0;
 			
 			//Store path to ini file at initial load so CallWndProc hooks can find it
 			GetModuleFileName(NULL, inipath, sizeof(inipath)/sizeof(wchar_t));
@@ -1450,12 +1466,13 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
 				wchar_t *key;
 				wchar_t *def;
 				enum action *ptr;
+				int vkey;
 			} buttons[] = {
-				{L"LMB", L"Move",    &sharedsettings.Mouse.LMB},
-				{L"MMB", L"Resize",  &sharedsettings.Mouse.MMB},
-				{L"RMB", L"Resize",  &sharedsettings.Mouse.RMB},
-				{L"MB4", L"Nothing", &sharedsettings.Mouse.MB4},
-				{L"MB5", L"Nothing", &sharedsettings.Mouse.MB5},
+				{L"LMB", L"Move",    &sharedsettings.Mouse.LMB, VK_LBUTTON},
+				{L"MMB", L"Resize",  &sharedsettings.Mouse.MMB, VK_MBUTTON},
+				{L"RMB", L"Resize",  &sharedsettings.Mouse.RMB, VK_RBUTTON},
+				{L"MB4", L"Nothing", &sharedsettings.Mouse.MB4, VK_XBUTTON1},
+				{L"MB5", L"Nothing", &sharedsettings.Mouse.MB5, VK_XBUTTON2},
 				{NULL}
 			};
 			int i;
@@ -1467,7 +1484,16 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
 				else if (!wcsicmp(txt,L"Center"))      *buttons[i].ptr = ACTION_CENTER;
 				else if (!wcsicmp(txt,L"AlwaysOnTop")) *buttons[i].ptr = ACTION_ALWAYSONTOP;
 				else if (!wcsicmp(txt,L"Close"))       *buttons[i].ptr = ACTION_CLOSE;
+				else if (!wcsicmp(txt,L"Hotkey")) {
+					*buttons[i].ptr = ACTION_HOTKEY;
+					sharedsettings.Mouse.Hotkey = 1;
+					//sharedsettings.Hotkeys.keys[sharedsettings.Hotkeys.length++] = buttons[i].vkey;
+				}
 				else                                   *buttons[i].ptr = ACTION_NONE;
+			}
+			//Hook mouse if a mouse button is a hotkey
+			if (sharedsettings.Mouse.Hotkey) {
+				HookMouse();
 			}
 			
 			//[Keyboard]
