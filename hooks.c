@@ -42,7 +42,7 @@ HWND g_hwnd;
 #define FOCUS_TIMER   WM_APP+5
 
 //Enumerators
-enum action {ACTION_NONE=0, ACTION_MOVE, ACTION_RESIZE, ACTION_MINIMIZE, ACTION_CENTER, ACTION_ALWAYSONTOP, ACTION_CLOSE, ACTION_LOWER, ACTION_ALTTAB, ACTION_VOLUME, ACTION_TRANSPARENCY};
+enum action {ACTION_NONE=0, ACTION_MOVE, ACTION_RESIZE, ACTION_MINIMIZE, ACTION_CENTER, ACTION_ALWAYSONTOP, ACTION_CLOSE, ACTION_LOWER, ACTION_ALTTAB, ACTION_VOLUME};
 enum button {BUTTON_NONE=0, BUTTON_LMB, BUTTON_MMB, BUTTON_RMB, BUTTON_MB4, BUTTON_MB5};
 enum resize {RESIZE_NONE=0, RESIZE_TOP, RESIZE_RIGHT, RESIZE_BOTTOM, RESIZE_LEFT, RESIZE_CENTER};
 enum cursor {HAND, SIZENWSE, SIZENESW, SIZENS, SIZEWE, SIZEALL};
@@ -71,7 +71,6 @@ struct {
 struct {
 	HWND hwnd;
 	short alt;
-	short activated;
 	short ctrl;
 	short interrupted;
 	short updaterate;
@@ -83,7 +82,6 @@ struct {
 		enum resize x, y;
 	} resize;
 	short blockaltup;
-	short blockmouseup;
 	short ignorectrl;
 	short locked;
 	struct wnddata *wndentry;
@@ -881,18 +879,14 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wP
 		
 		if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
 			if (IsHotkey(vkey)) {
-				//Block this keypress if an we're already pressing a hotkey or an action is happening
-				if (state.activated && !state.alt && sharedstate.action) {
-					state.alt = 1;
-				}
-				if (state.activated && state.alt) {
-					return 1;
+				//Don't do anything if we're already pressing a hotkey
+				if (state.alt) {
+					return CallNextHookEx(NULL, nCode, wParam, lParam);
 				}
 				
 				//Update state
 				state.alt = 1;
 				state.blockaltup = 0;
-				state.blockmouseup = 0;
 				state.interrupted = 0;
 				
 				//Ctrl as hotkey should not trigger Ctrl-focusing when starting dragging, releasing and pressing it again will focus though
@@ -1000,8 +994,8 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wP
 					}
 				}
 				
-				//Prevent the alt keyup from triggering the window menu to be selected
-				//The way this works is that the alt key is "disguised" by sending ctrl keydown/keyup events
+				//Block the alt keyup to prevent the window menu to be selected.
+				//The way this works is that the alt key is "disguised" by sending ctrl keydown/keyup events just before the altup (see issue 20).
 				if (state.blockaltup || sharedstate.action) {
 					state.ignorectrl = 1;
 					KEYBDINPUT ctrl[2] = {{VK_CONTROL,0,0,0}, {VK_CONTROL,0,KEYEVENTF_KEYUP,0}};
@@ -1144,46 +1138,9 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
 					return CallNextHookEx(NULL, nCode, wParam, lParam);
 				}
 			}
-			else if (sharedsettings.Mouse.Scroll == ACTION_TRANSPARENCY) {
-				HWND hwnd = WindowFromPoint(pt);
-				if (hwnd == NULL) {
-					return CallNextHookEx(NULL, nCode, wParam, lParam);
-				}
-				hwnd = GetAncestor(hwnd, GA_ROOT);
-				
-				LONG_PTR style = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
-				if (!(style&WS_EX_LAYERED)) {
-					SetWindowLongPtr(hwnd, GWL_EXSTYLE, style|WS_EX_LAYERED);
-					SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
-				}
-				
-				BYTE old_alpha;
-				DWORD flags;
-				if (GetLayeredWindowAttributes(hwnd,NULL,&old_alpha,&flags) == FALSE) {
-					Error(L"GetLayeredWindowAttributes()", L"LowLevelMouseProc()", GetLastError(), TEXT(__FILE__), __LINE__);
-					return CallNextHookEx(NULL, nCode, wParam, lParam);
-				}
-				int alpha = old_alpha;
-
-				int alpha_delta = (sharedstate.shift)?8:64;
-				if (delta > 0) {
-					alpha += alpha_delta;
-					if (alpha > 255) {
-						alpha = 255;
-					}
-				}
-				else {
-					alpha -= alpha_delta;
-					if (alpha < 8) {
-						alpha = 8;
-					}
-				}
-				SetLayeredWindowAttributes(hwnd, 0, alpha, LWA_ALPHA);
-			}
 			
 			//Block original scroll event
 			state.blockaltup = 1;
-			state.activated = 1;
 			return 1;
 		}
 		
@@ -1237,17 +1194,14 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
 		if (state.alt && buttonstate == STATE_DOWN) {
 			//Double check if any of the hotkeys are being pressed
 			int i;
-			if (!state.activated) { //Don't check if we've activated, because keyups would be blocked and GetAsyncKeyState() won't return the correct state
-				for (i=0; i < sharedsettings.Hotkeys.length; i++) {
-					if (GetAsyncKeyState(sharedsettings.Hotkeys.keys[i])&0x8000) {
-						break;
-					}
-					else if (i+1 == sharedsettings.Hotkeys.length) {
-						state.alt = 0;
-						UnhookMouse();
-						Error(L"No hotkeys down", L"LowLevelMouseProc()", 0, TEXT(__FILE__), __LINE__);
-						return CallNextHookEx(NULL, nCode, wParam, lParam);
-					}
+			for (i=0; i < sharedsettings.Hotkeys.length; i++) {
+				if (GetAsyncKeyState(sharedsettings.Hotkeys.keys[i])&0x8000) {
+					break;
+				}
+				else if (i+1 == sharedsettings.Hotkeys.length) {
+					state.alt = 0;
+					UnhookMouse();
+					return CallNextHookEx(NULL, nCode, wParam, lParam);
 				}
 			}
 			
@@ -1304,7 +1258,6 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
 			if (!sharedstate.snap) {
 				sharedstate.snap = sharedsettings.AutoSnap;
 			}
-			state.activated = 1;
 			state.blockaltup = 1;
 			state.locked = 0;
 			state.origin.maximized = IsZoomed(state.hwnd);
@@ -1323,6 +1276,7 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
 			
 			//Find a nice place in wnddb if not already present
 			if (state.wndentry == NULL) {
+				int i;
 				for (i=0; i < NUMWNDDB+1 && wnddb.pos->restore == 1; i++) {
 					wnddb.pos = (wnddb.pos == &wnddb.items[NUMWNDDB-1])?&wnddb.items[0]:wnddb.pos+1;
 				}
@@ -1350,7 +1304,6 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
 				if (GetTickCount()-state.clicktime <= GetDoubleClickTime()) {
 					sharedstate.action = ACTION_NONE; //Stop move action
 					state.clicktime = 0; //Reset double-click time
-					state.blockmouseup = 1; //Block the mouseup, otherwise it can trigger a context menu (e.g. in explorer, or on the desktop)
 					
 					//Center window on monitor, if needed
 					HMONITOR wndmonitor = MonitorFromWindow(state.hwnd, MONITOR_DEFAULTTONEAREST);
@@ -1454,7 +1407,6 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
 				if (GetTickCount()-state.clicktime <= GetDoubleClickTime()) {
 					sharedstate.action = ACTION_NONE; //Stop resize action
 					state.clicktime = 0; //Reset double-click time
-					state.blockmouseup = 1; //Block the mouseup, otherwise it can trigger a context menu (e.g. in explorer, or on the desktop)
 					
 					//Get and set new position
 					int posx, posy, wndwidth, wndheight;
@@ -1554,14 +1506,6 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
 				}
 			}
 			
-			//We have to send the ctrl keys here too because of IE (and maybe some other program?)
-			state.ignorectrl = 1;
-			KEYBDINPUT ctrl[2] = {{VK_CONTROL,0,0,0}, {VK_CONTROL,0,KEYEVENTF_KEYUP,0}};
-			ctrl[0].dwExtraInfo = ctrl[1].dwExtraInfo = GetMessageExtraInfo();
-			INPUT input[2] = {{INPUT_KEYBOARD,{.ki=ctrl[0]}}, {INPUT_KEYBOARD,{.ki=ctrl[1]}}};
-			SendInput(2, input, sizeof(INPUT));
-			state.ignorectrl = 0;
-			
 			//Remember time of this click so we can check for double-click
 			state.clicktime = GetTickCount();
 			state.clickpt = pt;
@@ -1574,10 +1518,6 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
 			}
 			
 			//Prevent mousedown from propagating
-			return 1;
-		}
-		else if (buttonstate == STATE_UP && state.blockmouseup) {
-			state.blockmouseup = 0;
 			return 1;
 		}
 		else if (buttonstate == STATE_UP && sharedstate.action == action) {
@@ -1641,16 +1581,6 @@ __declspec(dllexport) LRESULT CALLBACK ScrollHook(int nCode, WPARAM wParam, LPAR
 			if (GetAsyncKeyState(VK_XBUTTON1)&0x8000) wp |= MK_XBUTTON1;
 			if (GetAsyncKeyState(VK_XBUTTON2)&0x8000) wp |= MK_XBUTTON2;
 			
-			//Change WM_MOUSEWHEEL to WM_MOUSEHWHEEL if shift is being depressed
-			//Note that this does not work on all windows, the message was introduced in Vista and far from all programs have implemented it
-			if (wParam == WM_MOUSEWHEEL
-			 && sharedsettings.InactiveScroll != 2
-			 && sharedstate.shift
-			 && GetAsyncKeyState(VK_SHIFT)&0x8000) {
-				wParam = WM_MOUSEHWHEEL;
-				wp = -wp; //Up is left, down is right
-			}
-			
 			//Forward scroll message
 			SendMessage(window, wParam, wp, lp);
 			
@@ -1696,7 +1626,6 @@ int UnhookMouse() {
 	
 	//Stop action
 	sharedstate.action = ACTION_NONE;
-	state.activated = 0;
 	if (sharedsettings.Performance.Cursor) {
 		ShowWindowAsync(cursorwnd, SW_HIDE);
 	}
@@ -2039,17 +1968,16 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
 			int i;
 			for (i=0; buttons[i].key != NULL; i++) {
 				GetPrivateProfileString(L"Input", buttons[i].key, buttons[i].def, txt, sizeof(txt)/sizeof(wchar_t), inipath);
-				if      (!wcsicmp(txt,L"Move"))         *buttons[i].ptr = ACTION_MOVE;
-				else if (!wcsicmp(txt,L"Resize"))       *buttons[i].ptr = ACTION_RESIZE;
-				else if (!wcsicmp(txt,L"Minimize"))     *buttons[i].ptr = ACTION_MINIMIZE;
-				else if (!wcsicmp(txt,L"Center"))       *buttons[i].ptr = ACTION_CENTER;
-				else if (!wcsicmp(txt,L"AlwaysOnTop"))  *buttons[i].ptr = ACTION_ALWAYSONTOP;
-				else if (!wcsicmp(txt,L"Close"))        *buttons[i].ptr = ACTION_CLOSE;
-				else if (!wcsicmp(txt,L"Lower"))        *buttons[i].ptr = ACTION_LOWER;
-				else if (!wcsicmp(txt,L"AltTab"))       *buttons[i].ptr = ACTION_ALTTAB;
-				else if (!wcsicmp(txt,L"Volume"))       *buttons[i].ptr = ACTION_VOLUME;
-				else if (!wcsicmp(txt,L"Transparency")) *buttons[i].ptr = ACTION_TRANSPARENCY;
-				else                                    *buttons[i].ptr = ACTION_NONE;
+				if      (!wcsicmp(txt,L"Move"))        *buttons[i].ptr = ACTION_MOVE;
+				else if (!wcsicmp(txt,L"Resize"))      *buttons[i].ptr = ACTION_RESIZE;
+				else if (!wcsicmp(txt,L"Minimize"))    *buttons[i].ptr = ACTION_MINIMIZE;
+				else if (!wcsicmp(txt,L"Center"))      *buttons[i].ptr = ACTION_CENTER;
+				else if (!wcsicmp(txt,L"AlwaysOnTop")) *buttons[i].ptr = ACTION_ALWAYSONTOP;
+				else if (!wcsicmp(txt,L"Close"))       *buttons[i].ptr = ACTION_CLOSE;
+				else if (!wcsicmp(txt,L"Lower"))       *buttons[i].ptr = ACTION_LOWER;
+				else if (!wcsicmp(txt,L"AltTab"))      *buttons[i].ptr = ACTION_ALTTAB;
+				else if (!wcsicmp(txt,L"Volume"))      *buttons[i].ptr = ACTION_VOLUME;
+				else                                   *buttons[i].ptr = ACTION_NONE;
 			}
 			
 			unsigned int temp;

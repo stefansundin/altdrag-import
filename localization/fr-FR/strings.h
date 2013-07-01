@@ -8,13 +8,6 @@
 */
 
 struct strings fr_FR = {
- /* === translation info === */
- /* code               */ L"fr-FR",
- /* lang_english       */ L"French",
- /* lang               */ L"Français",
- /* author             */ L"Samy Mechiri",
- 
- /* === app === */
  /* tray_enabled       */ APP_NAME,
  /* tray_disabled      */ APP_NAME " (désactivé)",
  { /* menu */
@@ -33,6 +26,7 @@ struct strings fr_FR = {
  },
  
  /* === config === */
+ /* lang               */ L"Français",
  /* title              */ L"Configuration de " APP_NAME,
  { /* tabs */
    /* general          */ L"Général",
@@ -52,6 +46,7 @@ struct strings fr_FR = {
    /* autosnap2        */ L"+ Extérieur des fenêtres",
    /* autosnap3        */ L"+ Intérieur des fenêtres",
    /* language         */ L"Langue:",
+   /* helptranslate    */ L"Aider à la traduction?",
    /* autostart_box    */ L"Démarrage automatique",
    /* autostart        */ L"Déma&rrer "APP_NAME" en se connectant",
    /* autostart_hide   */ L"Cac&her l'icone de la barre d'outils",
@@ -85,7 +80,6 @@ struct strings fr_FR = {
      /* nothing        */ L"Nothing",
      /* alttab         */ L"Alt+Tab",
      /* volume         */ L"Volume",
-     /* transparency   */ L"Transparency",
    },
    { /* hotkeys */
      /* box            */ L"Activation",
@@ -122,7 +116,8 @@ struct strings fr_FR = {
    /* version          */ L"Version "APP_VERSION,
    /* author           */ L"Crée par Stefan Sundin",
    /* license          */ APP_NAME L" est un logiciel gratuit et open source!\nFaites en profiter vos amis!",
+   /* donations_box    */ L"Dons",
+   /* donations_plea   */ L"Si "APP_NAME" vous est utile, donnez un coup de pouce financier. Donnez le montant de votre choix.",
    /* donate           */ L"&Donner",
-   /*translation_credit*/ L"Translation credit",
  },
 };

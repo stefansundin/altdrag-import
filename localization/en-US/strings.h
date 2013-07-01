@@ -8,13 +8,6 @@
 */
 
 struct strings en_US = {
- /* === translation info === */
- /* code               */ L"en-US",
- /* lang_english       */ L"English",
- /* lang               */ L"English",
- /* author             */ L"Stefan Sundin",
- 
- /* === app === */
  /* tray_enabled       */ APP_NAME,
  /* tray_disabled      */ APP_NAME " (disabled)",
  { /* menu */
@@ -33,6 +26,7 @@ struct strings en_US = {
  },
  
  /* === config === */
+ /* lang               */ L"English",
  /* title              */ APP_NAME L" Configuration",
  { /* tabs */
    /* general          */ L"General",
@@ -52,6 +46,7 @@ struct strings en_US = {
    /* autosnap2        */ L"+ outside of windows",
    /* autosnap3        */ L"+ inside of windows",
    /* language         */ L"Language:",
+   /* helptranslate    */ L"How can I help translate?",
    /* autostart_box    */ L"Autostart",
    /* autostart        */ L"S&tart "APP_NAME" when logging on",
    /* autostart_hide   */ L"&Hide tray",
@@ -85,7 +80,6 @@ struct strings en_US = {
      /* nothing        */ L"Nothing",
      /* alttab         */ L"Alt+Tab",
      /* volume         */ L"Volume",
-     /* transparency   */ L"Transparency",
    },
    { /* hotkeys */
      /* box            */ L"Hotkeys",
@@ -105,7 +99,7 @@ struct strings en_US = {
    /* snaplist         */ L"Snaplist:",
    /* explanation      */ L"Read <a href=\"http://code.google.com/p/altdrag/wiki/Blacklist\">the wiki</a> on the website for a thorough explanation of how the blacklist works!",
    /* findwindow_box   */ L"Identify window",
-   /* _explanation     */ L"Click the icon to identify the classname of a window so that you can add it to the Blacklist or Snaplist above.",
+   /* _explanation     */ L"Use this feature to identify the classname of a window so you can add it to the Blacklist or Snaplist above.",
  },
  { /* advanced tab */
    /* box              */ L"Advanced settings",
@@ -121,8 +115,9 @@ struct strings en_US = {
    /* box              */ L"About "APP_NAME,
    /* version          */ L"Version "APP_VERSION,
    /* author           */ L"Created by Stefan Sundin",
-   /* license          */ APP_NAME L" is free and open source software!\nFeel free to redistribute!",
+   /* license          */ APP_NAME L" is free and open source software!\nPlease redistribute!",
+   /* donations_box    */ L"Donations",
+   /* donations_plea   */ L"If you find "APP_NAME" useful, please consider donating money. Any amount will do.",
    /* donate           */ L"&Donate",
-   /*translation_credit*/ L"Translation credit",
  },
 };

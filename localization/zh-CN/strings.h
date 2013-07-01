@@ -8,13 +8,6 @@
 */
 
 struct strings zh_CN = {
- /* === translation info === */
- /* code               */ L"zh-CN",
- /* lang_english       */ L"Chinese",
- /* lang               */ L"简体",
- /* author             */ L"Jack Jin",
- 
- /* === app === */
  /* tray_enabled       */ APP_NAME,
  /* tray_disabled      */ APP_NAME " (禁止)",
  { /* menu */
@@ -33,17 +26,18 @@ struct strings zh_CN = {
  },
  
  /* === config === */
+ /* lang               */ L"简体",
  /* title              */ APP_NAME L" 配置",
  { /* tabs */
    /* general          */ L"通用",
    /* input            */ L"鼠标和键盘",
-   /* blacklist        */ L"排除列表",
+   /* blacklist        */ L"不作用列表",
    /* advanced         */ L"增强",
    /* about            */ L"关于",
  },
  { /* general tab */
    /* box              */ L"通用设置",
-   /* autofocus        */ L"(&F)拖动时聚焦窗口.\n按Ctrl也可以聚焦到窗口.",
+   /* autofocus        */ L"(&F)把动时聚焦窗口.\n按Ctrl也可以聚集到窗口.",
    /* aero             */ L"(&A)Win7窗口贴边自动调整",
    /* inactivescroll   */ L"&滚动非活动窗口",
    /* autosnap         */ L"自动吸附在:",
@@ -52,15 +46,16 @@ struct strings zh_CN = {
    /* autosnap2        */ L"+ 在窗口外",
    /* autosnap3        */ L"+ 在窗口内",
    /* language         */ L"语言:",
+   /* helptranslate    */ L"怎样参与翻译?",
    /* autostart_box    */ L"随系统自动启动",
    /* autostart        */ L"(&t)登录时启动"APP_NAME"",
    /* autostart_hide   */ L"(&H)隐藏通知栏图标",
-   /* autostart_elevate*/ L"(&E)提升至超级用户权限",
-   /*       elevate_tip*/ L"注意,除非你完全禁用UAC,否则每次登录都会出现UAC提示.",
-   /* elevate          */ L"(&l)提升",
-   /* elevated         */ L"已经提升",
-   /* elevate_tip      */ L"这会创建一个新的以超级用户权限运行的"APP_NAME"实例. 以允许"APP_NAME"管理其他以超级用户权限运行的程序.\n\n.在弹出UAC提示时，你必须同意"APP_NAME"以超级用户权限运行",
-   /* elevation_aborted*/ L"提升过程终止.",
+   /* autostart_elevate*/ L"&Elevate to administrator privileges",
+   /*       elevate_tip*/ L"Note that a UAC prompt will appear every time you log in, unless you disable UAC completely.",
+   /* elevate          */ L"E&levate",
+   /* elevated         */ L"Elevated",
+   /* elevate_tip      */ L"This will create a new instance of "APP_NAME" which is running with administrator privileges. This allows "APP_NAME" to manage other programs which are running with administrator privileges.\n\nYou will have to approve a UAC prompt from Windows to allow "APP_NAME" to run with administrator privileges.",
+   /* elevation_aborted*/ L"Elevation aborted.",
    /* autosave         */ L"注意: 设置改动后会立即保存!",
  },
  { /* input tab */
@@ -75,17 +70,16 @@ struct strings zh_CN = {
      /* more          `*/ L"如果你有好的鼠标动作想法, 可以在<a href=\"http://code.google.com/p/altdrag/issues/list\">AltDrag网站</a>上提交一个请求!",
    },
    { /* actions `*/
-     /* move           */ L"移动",
-     /* resize         */ L"更改大小",
-     /* close          */ L"关闭",
-     /* minimize       */ L"最小化",
-     /* lower          */ L"降低",
-     /* alwaysontop    */ L"一直在最上层",
-     /* center         */ L"居中",
+     /* move           */ L"Move",
+     /* resize         */ L"Resize",
+     /* close          */ L"Close",
+     /* minimize       */ L"Minimize",
+     /* lower          */ L"Lower",
+     /* alwaysontop    */ L"AlwaysOnTop",
+     /* center         */ L"Center",
      /* nothing        */ L"Nothing",
      /* alttab         */ L"Alt+Tab",
      /* volume         */ L"Volume",
-     /* transparency   */ L"Transparency",
    },
    { /* hotkeys */
      /* box            */ L"热键",
@@ -99,19 +93,19 @@ struct strings zh_CN = {
    },
  },
  { /* blacklist tab */
-   /* box              */ L"排除列表设置",
-   /* processblacklist */ L"按进程名称的排除列表:",
-   /* blacklist        */ L"排除列表:",
+   /* box              */ L"不作用列表设置",
+   /* processblacklist */ L"按进程名称的不作用列表:",
+   /* blacklist        */ L"不作用列表:",
    /* snaplist         */ L"自动吸附列表:",
-   /* explanation      */ L"排除列表具体如何工作，请参阅<a href=\"http://code.google.com/p/altdrag/wiki/Blacklist\">AltDrag网站维基</a>!",
+   /* explanation      */ L"不作用列表具体如何工作，请参阅<a href=\"http://code.google.com/p/altdrag/wiki/Blacklist\">AltDrag网站维基</a>!",
    /* findwindow_box   */ L"辩识窗口",
-   /* _explanation     */ L"全用此工具来辩识窗口的类名，以便于你在排除列表或自动吸附列表中进行添加.",
+   /* _explanation     */ L"全用此工具来辩识窗口的类名，以便于你在不作用列表或自动吸附列表中进行添加.",
  },
  { /* advanced tab */
    /* box              */ L"增强设置",
    /* hookwindows      */ L"(&E)在普通移动中吸附窗口.\n窗口之间自动吸附!",
    /* hookwindows_warn`*/ L"注意这个特性不是100%安全的，因为他会对其他进程进行挂接或类似操作.",
-   /* checkonstartup   */ L"(&u)自动检查更新",
+   /* checkonstartup   */ L"(&u)处动检查更新",
    /* beta             */ L"为&beta版检查更新",
    /* checknow         */ L"检查更新",
    /* ini              */ APP_NAME L"的设置保存在"APP_NAME".ini. 有少量配置可以通过手工编辑此文件来更改.",
@@ -122,7 +116,8 @@ struct strings zh_CN = {
    /* version          */ L"版本"APP_VERSION,
    /* author           */ L"作者: Stefan Sundin",
    /* license          */ APP_NAME L" 是自由和开源软件!\n欢迎重新发布!",
+   /* donations_box    */ L"捐赠",
+   /* donations_plea   */ L"如果你觉得"APP_NAME"有用, 你可以考虑进行一定的捐蹭. 欢迎任何数量的捐赠.",
    /* donate           */ L"(&D)捐赠",
-   /*translation_credit*/ L"Translation credit",
  },
 };

@@ -160,8 +160,8 @@ INT_PTR CALLBACK GeneralPageDialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		
 		int i;
 		for (i=0; i < ARRAY_SIZE(languages); i++) {
-			ComboBox_AddString(GetDlgItem(hwnd,IDC_LANGUAGE), languages[i]->lang);
-			if (l10n == languages[i]) {
+			ComboBox_AddString(GetDlgItem(hwnd,IDC_LANGUAGE), languages[i].strings->lang);
+			if (l10n == languages[i].strings) {
 				ComboBox_SetCurSel(GetDlgItem(hwnd,IDC_LANGUAGE), i);
 			}
 		}
@@ -192,12 +192,12 @@ INT_PTR CALLBACK GeneralPageDialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			int i = ComboBox_GetCurSel(control);
 			if (i == ARRAY_SIZE(languages)) {
 				OpenUrl(L"http://code.google.com/p/altdrag/wiki/Translate");
-				for (i=0; l10n != languages[i]; i++) {}
+				for (i=0; l10n != languages[i].strings; i++) {}
 				ComboBox_SetCurSel(control, i);
 			}
 			else {
-				l10n = languages[i];
-				WritePrivateProfileString(L"General", L"Language", l10n->code, inipath);
+				l10n = languages[i].strings;
+				WritePrivateProfileString(L"General", L"Language", languages[i].code, inipath);
 				updatel10n = 1;
 				UpdateL10n();
 			}
@@ -277,9 +277,7 @@ INT_PTR CALLBACK GeneralPageDialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		
 		//Language
 		ComboBox_DeleteString(GetDlgItem(hwnd,IDC_LANGUAGE), ARRAY_SIZE(languages));
-		if (l10n == &en_US) {
-			ComboBox_AddString(GetDlgItem(hwnd,IDC_LANGUAGE), L"How can I help translate?");
-		}
+		ComboBox_AddString(GetDlgItem(hwnd,IDC_LANGUAGE), l10n->general.helptranslate);
 	}
 	return FALSE;
 }
@@ -313,10 +311,9 @@ INT_PTR CALLBACK InputPageDialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 	
 	//Scroll
 	struct action scroll_actions[] = {
-		{ L"AltTab",       l10n->input.actions.alttab },
-		{ L"Volume",       l10n->input.actions.volume },
-		{ L"Transparency", l10n->input.actions.transparency },
-		{ L"Nothing",      l10n->input.actions.nothing },
+		{ L"AltTab",      l10n->input.actions.alttab },
+		{ L"Volume",      l10n->input.actions.volume },
+		{ L"Nothing",     l10n->input.actions.nothing },
 	};
 	
 	//Hotkeys
@@ -609,29 +606,22 @@ INT_PTR CALLBACK AdvancedPageDialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 INT_PTR CALLBACK AboutPageDialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	if (msg == WM_COMMAND) {
 		if (wParam == IDC_DONATE) {
-			OpenUrl(L"https://code.google.com/p/altdrag/wiki/Donate");
+			OpenUrl(L"http://code.google.com/p/altdrag/wiki/Donate");
 		}
 	}
 	else if (msg == WM_NOTIFY) {
 		LPNMHDR pnmh = (LPNMHDR)lParam;
 		if (pnmh->code == PSN_SETACTIVE) {
 			//Update text
-			SetDlgItemText(hwnd, IDC_ABOUT_BOX,        l10n->about.box);
-			SetDlgItemText(hwnd, IDC_VERSION,          l10n->about.version);
-			SetDlgItemText(hwnd, IDC_AUTHOR,           l10n->about.author);
-			SetDlgItemText(hwnd, IDC_LICENSE,          l10n->about.license);
-			SetDlgItemText(hwnd, IDC_DONATE,           l10n->about.donate);
-			SetDlgItemText(hwnd, IDC_TRANSLATIONS_BOX, l10n->about.translation_credit);
-			
-			wchar_t txt[1024] = L"";
-			int i;
-			for (i=0; i < ARRAY_SIZE(languages); i++) {
-				wcscat(txt, languages[i]->lang_english);
-				wcscat(txt, L": ");
-				wcscat(txt, languages[i]->author);
-				wcscat(txt, L"\n");
-			}
-			SetDlgItemText(hwnd, IDC_TRANSLATIONS, txt);
+			SetDlgItemText(hwnd, IDC_ABOUT_BOX, l10n->about.box);
+			SetDlgItemText(hwnd, IDC_VERSION,   l10n->about.version);
+			SetDlgItemText(hwnd, IDC_AUTHOR,    l10n->about.author);
+			SetDlgItemText(hwnd, IDC_LICENSE,   l10n->about.license);
+			wchar_t txt[50] = L"       ";
+			wcscat(txt, l10n->about.donations_box);
+			SetDlgItemText(hwnd, IDC_DONATIONS_BOX, txt);
+			SetDlgItemText(hwnd, IDC_DONATIONS_PLEA, l10n->about.donations_plea);
+			SetDlgItemText(hwnd, IDC_DONATE,         l10n->about.donate);
 		}
 	}
 	

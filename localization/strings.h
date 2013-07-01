@@ -1,10 +1,5 @@
 
 struct strings {
-	wchar_t *code;
-	wchar_t *lang_english;
-	wchar_t *lang;
-	wchar_t *author;
-	
 	/* tray */
 	wchar_t *tray_enabled;
 	wchar_t *tray_disabled;
@@ -26,6 +21,7 @@ struct strings {
 	} update;
 	
 	/* config */
+	wchar_t *lang;
 	wchar_t *title;
 	struct {
 		wchar_t *general;
@@ -45,6 +41,7 @@ struct strings {
 		wchar_t *autosnap2;
 		wchar_t *autosnap3;
 		wchar_t *language;
+		wchar_t *helptranslate;
 		wchar_t *autostart_box;
 		wchar_t *autostart;
 		wchar_t *autostart_hide;
@@ -78,7 +75,6 @@ struct strings {
 			wchar_t *nothing;
 			wchar_t *alttab;
 			wchar_t *volume;
-			wchar_t *transparency;
 		} actions;
 		struct {
 			wchar_t *box;
@@ -115,8 +111,9 @@ struct strings {
 		wchar_t *version;
 		wchar_t *author;
 		wchar_t *license;
+		wchar_t *donations_box;
+		wchar_t *donations_plea;
 		wchar_t *donate;
-		wchar_t *translation_credit;
 	} about;
 };
 
@@ -128,14 +125,17 @@ struct strings {
 #include "sk-SK/strings.h"
 #include "zh-CN/strings.h"
 
-struct strings *languages[] = {
-	&en_US,
-	&fr_FR,
-	&pl_PL,
-	&pt_BR,
-	&sk_SK,
-	&ru_RU,
-	&zh_CN,
+struct {
+	wchar_t *code;
+	struct strings *strings;
+} languages[] = {
+	{ L"en-US", &en_US },
+	{ L"fr-FR", &fr_FR },
+	{ L"pl-PL", &pl_PL },
+	{ L"pt-BR", &pt_BR },
+	{ L"ru-RU", &ru_RU },
+	{ L"sk-SK", &sk_SK },
+	{ L"zh-CN", &zh_CN },
 };
 
 struct strings *l10n = &en_US;

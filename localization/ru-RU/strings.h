@@ -1,4 +1,4 @@
- /*
+﻿/*
 	AltDrag - ru-RU localization by Neek Eoneof (eoneof@gmail.com) and Dmitry Trubin (dtruebin@gmail.com)
 	
 	This program is free software: you can redistribute it and/or modify
@@ -8,13 +8,6 @@
 */
 
 struct strings ru_RU = {
- /* === translation info === */
- /* code               */ L"ru-RU",
- /* lang_english       */ L"Russian",
- /* lang               */ L"Русский",
- /* author             */ L"Neek Eoneof, Dmitry Trubin",
- 
- /* === app === */
  /* tray_enabled       */ APP_NAME,
  /* tray_disabled      */ APP_NAME " (выключено)",
  { /* menu */
@@ -33,6 +26,7 @@ struct strings ru_RU = {
  },
  
  /* === config === */
+ /* lang               */ L"Русский",
  /* title              */ L"Настройки " APP_NAME,
  { /* tabs */
    /* general          */ L"Основные",
@@ -52,6 +46,7 @@ struct strings ru_RU = {
    /* autosnap2        */ L"+ к окнам снаружи",
    /* autosnap3        */ L"+ к окнам изнутри",
    /* language         */ L"Язык:",
+   /* helptranslate    */ L"Помочь с переводом",
    /* autostart_box    */ L"Автозагрузка",
    /* autostart        */ L"&Запускать "APP_NAME" при загрузке системы",
    /* autostart_hide   */ L"Прятать иконку в &области уведомлений",
@@ -72,7 +67,7 @@ struct strings ru_RU = {
      /* mb4            */ L"Кнопка мыши 4:",
      /* mb5            */ L"Кнопка мыши 5:",
      /* scroll        `*/ L"Колесо прокрутки:",
-     /* more          `*/ L"Запрос на новое действие мыши можно оставить <a href=\"http://code.google.com/p/altdrag/issues/list\">на сайте</a>!",
+     /* more          `*/ L"Запрос на новое действие мыши можно оставить <a href=\"http://code.google.com/p/altdrag/issues/list\">на сайте</a>!",
    },
    { /* actions `*/
      /* move           */ L"Переместить",
@@ -85,7 +80,6 @@ struct strings ru_RU = {
      /* nothing        */ L"Ничего",
      /* alttab         */ L"Alt+Tab",
      /* volume         */ L"Громкость",
-     /* transparency   */ L"Прозрачность",
    },
    { /* hotkeys */
      /* box            */ L"Горячие клавиши",
@@ -122,7 +116,8 @@ struct strings ru_RU = {
    /* version          */ L"Версия "APP_VERSION,
    /* author           */ L"Разработал Stefan Sundin",
    /* license          */ APP_NAME L" — бесплатная программа с открытым исходным кодом. Расскажите о ней друзьям!",
+   /* donations_box    */ L"Пожертвования",
+   /* donations_plea   */ L"Если использование "APP_NAME" помогает вам, поддержите проект. Подойдет любая сумма!",
    /* donate           */ L"&Помочь",
-   /*translation_credit*/ L"Авторы перевода",
  },
 };
