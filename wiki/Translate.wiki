@@ -1,4 +1,1 @@
-#summary Help translate AltDrag!
-#labels Phase-Implementation
-
-This page has moved to Github! [https://github.com/stefansundin/altdrag/blob/master/wiki/translate.md]
+This page has moved to Github! [https://github.com/stefansundin/altdrag/blob/master/doc/translate.md]
