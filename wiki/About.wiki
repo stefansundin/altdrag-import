@@ -1,4 +1,2 @@
-#summary A more in-depth introduction
 #labels Featured,Phase-Deploy
-
-This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/wiki/about.md
+This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/doc/about.md
