@@ -1,4 +1,2 @@
-#summary How to compile AltDrag
-#labels Featured,Phase-Implementation
-
-This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/wiki/build.md
+#labels Featured
+This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/doc/build.md
