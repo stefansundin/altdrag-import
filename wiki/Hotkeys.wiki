@@ -1,4 +1,1 @@
-#summary Configure which keys should trigger dragging, resizing, etc.
-#labels Phase-Deploy
-
-This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/wiki/hotkeys.md
+This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/doc/hotkeys.md
