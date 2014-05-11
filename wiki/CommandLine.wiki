@@ -1,4 +1,1 @@
-#summary Explanations of the command line options
-#labels Phase-Deploy
-
-This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/wiki/command-line.md
+This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/doc/command-line.md
