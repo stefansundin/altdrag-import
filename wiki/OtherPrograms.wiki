@@ -1,4 +1,1 @@
-#summary Other programs that do the same thing
-#labels Phase-QA
-
-This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/wiki/other-programs.md
+This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/doc/other-programs.md
