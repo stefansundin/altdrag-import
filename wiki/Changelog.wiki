@@ -1,3 +1,1 @@
-#summary History of changes
-
-This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/wiki/changelog.md
+This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/doc/changelog.md
