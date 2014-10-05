@@ -17,6 +17,9 @@ The easiest way to donate is by [https://www.paypal.com/cgi-bin/webscr?cmd=_dona
 
 Send BTC to: `1EhDUbc5MjC6JavC6idKiTCxnqSxY2sbTX`
 
+Here's a QR code you can scan if you use a mobile wallet:
+
+https://altdrag.googlecode.com/svn/wiki/btc-qr.png
 
 == Other donation alternatives ==
 
