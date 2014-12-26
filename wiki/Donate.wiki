@@ -1,5 +1,4 @@
 #summary If AltDrag is useful to you, please consider donating money.
-#labels Featured
 
 Donations are a great motivation for me to keep updating my programs. They are also perfect to get my attention if you want me to add some special feature.
 
