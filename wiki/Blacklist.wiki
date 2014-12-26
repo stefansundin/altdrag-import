@@ -1,2 +1,1 @@
-#labels Featured
 This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/doc/blacklist.md
