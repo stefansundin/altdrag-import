@@ -1,1 +1,1 @@
-This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/doc/about.md
+This page has moved to Github! https://github.com/stefansundin/altdrag/blob/doc/about.md
