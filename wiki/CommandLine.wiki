@@ -1,1 +1,1 @@
-This page has moved to Github! https://github.com/stefansundin/altdrag/blob/master/doc/command-line.md
+This page has moved to Github! https://github.com/stefansundin/altdrag/blob/doc/command-line.md
